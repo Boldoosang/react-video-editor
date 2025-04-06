@@ -1,13 +1,21 @@
 import { useEffect } from "react";
 import Editor from "./pages/editor";
-import useAuthStore from "./store/use-auth-store";
 import useDataState from "./store/use-data-state";
 import { getCompactFontData } from "./pages/editor/utils/fonts";
 import { FONTS } from "./data/fonts";
+import { useLocation } from "react-router-dom";
+import { useUploadedVideosStore } from "@/store/use-uploaded-videos-store";
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 
 export default function App() {
-  const { user } = useAuthStore();
+  const query = useQuery();
+  const videoUrl = query.get("videoUrl");
   const { setCompactFonts, setFonts } = useDataState();
+
+  const addVideoByUrl = useUploadedVideosStore((state) => state.addVideoByUrl);
 
   useEffect(() => {
     setCompactFonts(getCompactFontData(FONTS));
@@ -15,9 +23,20 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (user?.id) {
+    if (videoUrl) {
+      console.log(videoUrl);
+      addVideoByUrl(videoUrl, "teams-recording.mp4");
     }
-  }, [user?.id]);
+  }, [videoUrl, addVideoByUrl]);
+
+  if (!videoUrl) {
+    return (
+      <div>
+        <h1>Error</h1>
+        <p>No video URL provided.</p>
+      </div>
+    );
+  }
 
   return <Editor />;
 }
